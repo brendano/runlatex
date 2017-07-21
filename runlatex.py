@@ -13,8 +13,6 @@ commands yourself:
     you don't supply a target.
   - Run in non-interactive mode by default. If you have weird errors you need
     to see or respond to, override with -i.
-  - Clean build files before starting a full build; IME at least this tends to
-    give more stable/deterministic results.
 
 Website: https://github.com/brendano/runlatex
 """
