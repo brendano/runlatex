@@ -69,7 +69,11 @@ def do_open(target):
 
 def run_pdflatex_log(target, logfile, stepnum=None, **clean_args):
     # run pdflatex with logfile
-    cmd1 = "pdflatex -halt-on-error"
+    cmd1 = "pdflatex"
+    if FLAGS.ignore_errors:
+        pass
+    else:
+        cmd1 += " -halt-on-error"
     if FLAGS.interactive:
         # no logging I guess
         cmd1 = "{cmd1} {target} | tee {logfile}".format(**locals())
@@ -77,12 +81,14 @@ def run_pdflatex_log(target, logfile, stepnum=None, **clean_args):
         cmd1 = "{cmd1} -interaction=nonstopmode {target} > {logfile}".format(**locals())
 
     cmd = """
-    set -eu -o pipefail
+    {setflags}
     mkdir -p texlogs
     export max_print_line=10000
     export error_line=10000
     {cmd1}
-    """.format(**locals())
+    """.format(
+            setflags="" if FLAGS.ignore_errors else "set -eu -o pipefail",
+            **locals())
 
     out = cmd1.strip().split("\n")[-1].strip()
     if stepnum is not None:
@@ -228,7 +234,7 @@ def cleantex(target=None, skip_global=False):
     """
     if not skip_global:
         cmd = "rm -rf texlogs texput.log .DS_Store"
-        myprint(cmd)
+        if FLAGS.verbose: myprint(cmd)
         os.system(cmd)
 
     if target is None:
@@ -248,7 +254,7 @@ def cleantex(target=None, skip_global=False):
     cmd = """
     rm -f %s.{aux,bbl,blg,log,dvi,out,nav,snm,toc,synctex.gz*,fdb_latexmk,fls}
     """ % (target,)
-    myprint(cmd.strip())
+    if FLAGS.verbose: myprint(cmd.strip())
     os.system(cmd)
 
 def usage():
@@ -262,6 +268,7 @@ pp = argparse.ArgumentParser(description=__doc__.strip(),
 pp.add_argument('target', nargs='*')
 pp.add_argument('-v', '--verbose', action='store_true', help="Show all output, instead of trying to clean/hide it.")
 pp.add_argument('-i', '--interactive', action='store_true', help="Run in interactive mode with all output -- this is the default way of running the pdflatex command.")
+pp.add_argument('-e', '--ignore-errors', action='store_true')
 
 # Find the desired subcommand from symlink name (ideally)
 cmd = None
