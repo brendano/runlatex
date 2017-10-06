@@ -144,15 +144,16 @@ def qtex():
 def gotex():
     target = findtarget()
     os.system("rm -f texlogs/%s.gotex.[1-4].log" % target)
+    CE = not FLAGS.ignore_errors # "care about errors"
     def gopipeline():
         ret = run_pdflatex_log(target, "texlogs/{target}.gotex.1.log".format(**locals()), stepnum=1, clean_natbib=True)
-        if ret != 0: return ret
+        if ret != 0 and CE: return ret
         cmd = "bibtex {target} | tee texlogs/{target}.gotex.2.log".format(**locals())
         myprint("[2] %s" % cmd)
         ret = os.system(cmd)
-        if ret != 0: return ret
+        if ret != 0 and CE: return ret
         ret = run_pdflatex_log(target, "texlogs/{target}.gotex.3.log".format(**locals()),stepnum=3)
-        if ret != 0: return ret
+        if ret != 0 and CE: return ret
         ret = run_pdflatex_log(target, "texlogs/{target}.gotex.4.log".format(**locals()),stepnum=4)
         return ret
     ret = gopipeline()
