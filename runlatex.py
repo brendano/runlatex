@@ -190,7 +190,7 @@ def gotex():
 
 def clean_output(s, clean_natbib=False):
     lines = s.split("\n")
-    regexes = [
+    line_regexes = [
     '^This is pdfTeX',
     r'^ *restricted *\S+ *enabled.{0,5}$',
     r'^entering extended mode *$',
@@ -219,9 +219,9 @@ def clean_output(s, clean_natbib=False):
             ]
     if clean_natbib:
         # Package natbib Warning: Citation `Chen2014NN' on page A-8 undefined on input line 412.
-        regexes.append('Package natbib Warning.*Citation.*undefined')
-    regex = '|'.join('('+x+')' for x in regexes)
-    lines = [L for L in lines if not re.search(regex, L)]
+        line_regexes.append('Package natbib Warning.*Citation.*undefined')
+    line_regex = '|'.join('('+x+')' for x in line_regexes)
+    lines = [L for L in lines if not re.search(line_regex, L)]
 
     lines2=[]
     mode=False
