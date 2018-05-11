@@ -13,12 +13,34 @@ commands yourself:
     you don't supply a target.
   - Run in non-interactive mode by default. If you have weird errors you need
     to see or respond to, override with -i.
+  - Stop on error by default. If you want to force it to continue, override
+    with -e.
 
 Website: https://github.com/brendano/runlatex
 """
 # todo: look into what ST LatexTools or other editor/ide integrations do
 
 import sys,os,re,glob
+
+# def get_git_repo_root(limit=50):
+#     curdir = os.getcwd()
+#     for i in xrange(limit):
+#         if os.path.exists(os.path.join(curdir, ".git")):
+#             return curdir
+#         parent = os.path.abspath(os.path.join(curdir, os.pardir))
+#         if parent==curdir: return None
+#         curdir = parent
+#         
+# def checkgit():
+#     """return True if everything is ok.  Return False if dependencies are not checked-in to git repo. does not check whether they're pushed"""
+#     gitroot = get_git_repo_root()
+#     if not gitroot: return True
+#     lines = os.popen("grep H includegraphics *.tex")
+#     gfs = [(line, re.search(r'\{([^}]*)\}', line)) for line in lines]
+#     gfs = [(l,m) for (l,m) in gfs if m] #match objects
+#     gfs = [(l,m.group(1)) for m in gfs]
+
+
 
 def texref():
     """show references.. weirdly specific to certain conventions.."""
@@ -47,7 +69,7 @@ def findtarget():
 
     # If multiple "main" files: break ties via most-worked and recently
     # modified
-    if os.system("git log 2>&1 | head >/dev/null") == 0:
+    if os.system("git status &> /dev/null") == 0:
         ## Prefer the most-worked-on file
         def numcommits(f):
             p = os.popen("git log --oneline {f}".format(f=f))
@@ -143,7 +165,8 @@ def qtex():
 
 def gotex():
     target = findtarget()
-    os.system("rm -f texlogs/%s.gotex.[1-4].log" % target)
+    myprint("BUILDING {target}.tex => {target}.pdf".format(**locals()))
+    os.system("rm -f texlogs/{target}.gotex.[1-4].log".format(**locals()))
     CE = not FLAGS.ignore_errors # "care about errors"
     def gopipeline():
         ret = run_pdflatex_log(target, "texlogs/{target}.gotex.1.log".format(**locals()), stepnum=1, clean_natbib=True)
@@ -179,7 +202,7 @@ def clean_output(s, clean_natbib=False):
     'For additional information on amsmath',
     'Package hyperref Message: Driver',
     'Loading MPS to PDF converter',
-    '^Transcript written on',
+    # '^Transcript written on',
     '^\*geometry\*',
     '^\*+$',
     '^\* *Local config',
