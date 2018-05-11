@@ -189,6 +189,14 @@ def gotex():
         myprint("Error {ret} while compiling {target}.pdf".format(**locals()))
 
 def clean_output(s, clean_natbib=False):
+
+    multiline_regexes = [
+    # NIPS stylesheet gets this
+    r'\*geometry\* verbose mode.*(\n\* [^\n]*)*',
+    ]
+    for r in multiline_regexes:
+        s = re.sub(r, "", s)
+
     lines = s.split("\n")
     line_regexes = [
     '^This is pdfTeX',
@@ -214,12 +222,13 @@ def clean_output(s, clean_natbib=False):
 # LaTeX Font Warning: Font shape `OMS/pplx/m/n' undefined
 # (Font)              using `OMS/cmsy/m/n' instead
 # (Font)              for symbol `textbullet' on input line 9.
-    'LaTeX Font Warning',
-    r'\(Font\)',
+    '^LaTeX Font Warning',
+    r'^\(Font\)',
             ]
     if clean_natbib:
         # Package natbib Warning: Citation `Chen2014NN' on page A-8 undefined on input line 412.
-        line_regexes.append('Package natbib Warning.*Citation.*undefined')
+        line_regexes.append('^Package natbib Warning')
+        line_regexes.append('^\(natbib\)')
     line_regex = '|'.join('('+x+')' for x in line_regexes)
     lines = [L for L in lines if not re.search(line_regex, L)]
 
@@ -250,6 +259,13 @@ def clean_output(s, clean_natbib=False):
         s = re.sub(r'(^|\s)[\(\)](\s|$)', "", s)
     s = "\n".join(L.strip() for L in s.split("\n") if L.strip())
     return s
+
+def test_clean_output():
+    """e.g. 
+    python ~/sw/runlatex/runlatex.py test_clean_output < texlogs/nips_2018.gotex.4.log
+    """
+    print clean_output(sys.stdin.read())
+    # print clean_output(sys.stdin.read(), clean_natbib=True)
 
 def cleantex(target=None, skip_global=False):
     """cleantex [TARGET]:   Eliminate .out crap around a .tex file.
